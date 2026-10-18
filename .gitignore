@@ -1,0 +1,75 @@
+# Python build/test/cache
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Local environments and credentials
+.venv/
+venv/
+env/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+secrets/
+credentials.json
+token.json
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+
+# Model checkpoints and downloaded weights
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.h5
+*.bin
+models/**/checkpoint-*/
+models/**/weights/
+model_cache/
+hf_cache/
+.cache/
+wandb/
+mlruns/
+
+# Data that should be redownloaded or reviewed before publication
+data/raw/
+data/downloads/
+data/private/
+data/restricted/
+data/cache/
+data/processed/cache/
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+
+# Generated runtime artifacts
+storage/
+tmp/
+temp/
+reports/tmp/
+reports/cache/
+streamlit.log
+*.zip
+*.7z
+*.rar
+
+# Notebooks checkpoints
+.ipynb_checkpoints/
