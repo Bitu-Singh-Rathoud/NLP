@@ -6,6 +6,8 @@ M.Sc. Data Science · NLP Theory + Practical · Python 3.11 · FastAPI · Stream
 
 TrialOps retrieves public trial registrations, detects biomedical entities, conservatively parses explicit requirements, compares source protocols, and evaluates fabricated profiles against reviewed known constraints. The local application and measured experiments run on CPU. Scientific and clinical validation remain separate from software verification.
 
+This is an academic research demonstration for synthetic profiles, not medical advice, diagnosis, actual patient selection, or a complete clinical eligibility decision.
+
 The current source snapshot has **58 real ClinicalTrials.gov studies**, including 32 with Indian sites, 30 with US sites, and four with both. Country groups records; all cutoffs come from the selected source protocol. Location does not determine ethnicity, nationality, risk, or medical suitability. The supplied fictional demo remains under `legacy/` and is excluded from the application corpus.
 
 ## Start the existing workspace
@@ -25,16 +27,24 @@ Open [the application](http://127.0.0.1:8501) or [interactive API documentation]
 
 Startup reuses healthy existing services. Shutdown checks process identity and stops only services it owns. Detailed commands and actual Docker evidence are in [deployment instructions](docs/deployment.md).
 
-## Fresh Windows setup
+## Fresh checkout and Windows setup
+
+Clone the source repository, then create an isolated Python 3.11 environment. The committed public registry snapshot is enough to open the application; downloading CHIA or retraining a model is not required for startup.
 
 ```powershell
+git clone https://github.com/Bitu-Singh-Rathoud/NLP.git
+cd NLP
 py -3.11 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install --index-url https://download.pytorch.org/whl/cpu torch==2.14.1
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe -m pip check
 .\scripts\start.ps1
 ```
 
-`requirements-lock-windows.txt` records the complete tested Windows environment. Use it instead of `requirements.txt` when reproducing that environment on Python 3.11 Windows. Model weights are downloaded from public pinned revisions on first use and cached under ignored `models/hf/`; a first request can take longer. No key is needed. For offline use after downloading, set `$env:HF_HUB_OFFLINE='1'` before startup.
+The explicit PyTorch CPU-wheel install avoids CUDA runtime downloads. `requirements-lock-windows.txt` records the complete tested Windows environment. Use it instead of `requirements.txt` in the dependency step when reproducing that environment on Python 3.11 Windows, after installing the CPU wheel. The Docker backend uses the same CPU-wheel-first approach.
+
+Model weights are downloaded from public pinned revisions on first use and cached under ignored `models/hf/`; a first request can take longer. No API key is needed for the three public pretrained models. The Git repository does not include their weights, the generated vector index, the trained head, or local review decisions. Run `python -m scripts.model_smoke`, `python -m scripts.build_index`, and `python -m scripts.generation_smoke` with the environment's Python to populate the models/index needed by those features. For offline use after downloading, set `$env:HF_HUB_OFFLINE='1'` before startup; a missing local cache must be populated first.
 
 Without startup scripts, use two PowerShell windows:
 
@@ -139,6 +149,8 @@ A missing observation is UNKNOWN. Absence from a list of positive diagnoses is n
 | Optional draft | `google/flan-t5-small` | Executed local CPU generation; incomplete output observed; experimental and unverified |
 | Optional external local server | Configured Ollama model | Adapter and outage behavior tested; no Ollama inference claimed |
 
+The project does not fine-tune FLAN-T5 or the complete biomedical transformer. Its completed training experiment optimizes only the small CHIA classification head with the encoder frozen. That experimental head is not the default application's parser or eligibility engine.
+
 All three public pretrained repositories declare Apache-2.0. Revisions, cache behavior, licenses, context windows and measured inference are in [model documentation](docs/models.md), [adaptation results](docs/adaptation.md), and `reports/generation_smoke.json`. Loading forbids remote code and uses safetensors. The adapted head is saved under ignored `models/adapted_chia_head/` with a checksum manifest.
 
 Generation runs only when explicitly requested in the assistant. `GENERATOR_BACKEND=local` is the default; `none` disables it, and `ollama` uses `OLLAMA_URL` plus `OLLAMA_MODEL`. A generated draft is never a rule, eligibility decision, or verified source assertion. The tested small model returned only “Glycated hemoglobin” for a real question asking for an HbA1c requirement; this demonstrates an answer-quality limitation despite successful inference. Exact source excerpts remain the primary useful answer. Context selection/truncation and a narrow numeric-token guard are reported; that guard does not verify entailment.
@@ -214,6 +226,8 @@ Pydantic rejects unknown profile fields and invalid/nonfinite measurements. The 
 
 Unit and integration tests cover source integrity, pagination/outages, schema changes, parser safety, bounds, exclusions, negation, AND/OR/NOT, missing units, contradictions, review versions/revocation, filters, unknown statuses, oversized/nonfinite data, source injection, model unavailability and UI regressions. Live HTTP and Streamlit smoke scripts use real models/corpus operations. The default pytest discovery is `tests/`; frozen legacy components belong under `legacy/` and are verified separately without deletion. Current test counts and commands are generated into `reports/test_results.json` by `python -m scripts.verify`.
 
+The saved full verification on 18 October 2026 records **150 passed, zero failed and zero skipped**, a passing dependency check, separate legacy sanity checks, and successful live integration/UI smoke runs. These are software checks, separate from the NLP quality measurements above. To refresh machine-readable verification, run `.\.venv\Scripts\python.exe -m scripts.verify`; add `--live` after starting the backend and frontend to include the live checks.
+
 ## Docker
 
 ```powershell
@@ -226,10 +240,32 @@ Compose configuration validation passed. An actual build was attempted but the i
 
 `backend/app/`: APIs, ingestion/store, NLP, models, retrieval, reviews, rule evaluation and workflow. `frontend/app.py`: all eight UI pages. `experiments/`: actual reproducible evaluations/training. `data/annotations/`: schema, developer references and unlabeled registry queue. `data/synthetic/`: seeded fabricated profiles. `scripts/`: ingestion, model/index runs, local operations, verification and report generation. `tests/`: active suite. `reports/`: measured outputs and graphs. `docs/`: methods, technical report, demonstration outline, viva answers and completion matrix. `legacy/`: untouched supplied demo.
 
+The [complete Hinglish explanation and viva script](docs/project_explanation_hinglish.md) walks through the project, NLP/model roles, actual training, India/US rationale, architecture, Docker status and demonstration. Its [formatted HTML version](docs/project_explanation_hinglish.html) can be downloaded and opened locally for navigation and printing; GitHub displays HTML source rather than hosting the application.
+
+## Source contents and reproducibility boundaries
+
+The repository contains ordinary source files, tests, Dockerfiles, Compose configuration, dependency pins, experiment scripts, documentation, the small public registry snapshot with provenance, synthetic fixtures, and measured report artifacts. The supplied prototype is preserved under `legacy/`; it is not silently substituted for the working application. The source is not distributed as a giant ZIP in place of these folders.
+
+`.gitignore` excludes virtual environments and Python caches, `.env` and local Streamlit secrets, model weights and downloaded model caches, external corpora (including the separately downloaded CHIA archive), generated vector indexes, SQLite review databases, local process state/logs, and ZIP archives. Keep real patient records, credentials and private/restricted exports out of version control. `.env.example` documents configuration without supplying credentials.
+
+To reproduce CHIA results, obtain the separately attributed licensed dataset with `scripts.download_chia`, cache the pinned biomedical model with `scripts.model_smoke`, run the entity benchmark first, then run the head-adaptation experiment using the commands above. The head experiment deliberately loads the encoder from the local cache and verifies the original held-out benchmark artifacts. Public registry refreshes, model downloads and first-time corpus acquisition require network access; the saved source snapshot and report metrics do not imply these external artifacts are bundled.
+
 ## Limits, ethics and further research
 
 No real patient records, disease-risk predictions or medical recommendations are used. Expert verification of the newly retrieved real criteria is unavailable. Public registry content is sponsor submitted and may be incomplete or outdated. The sample is small, convenience selected and not representative; subgroup coverage is not subgroup accuracy. Native CTRI automated ingestion remains constrained by observed access restrictions, with compliant manual import supplied.
 
 The parser's low real-world coverage is a substantive limitation. The reference tests are developer authored and not blinded; CHIA ontology mapping and its single test subset limit generalization. The head adaptation uses one seed and unequal training volume versus the dictionary. The local generator has limited answer quality and does not verify entailment. Review labels are not authenticated expert identities. Clinical validation, larger independent annotation, protocol-family split design, more robust semantic parsing, calibrated abstention, multiple-seed training and properly labeled regional transfer experiments are future research, not completed claims.
 
+The entity-model comparison is not a controlled three-way structured-rule extraction benchmark. No large independently human-verified rule-level gold set, schema-constrained LLM rule-extraction comparison, or proven country/phase domain adaptation is claimed. Entity F1 must not be presented as patient-matching or complete-rule accuracy.
+
 See [feature completion and blockers](docs/feature_completion.md), [technical report](docs/technical_report.md), and [professor demonstration/viva notes](docs/demo_and_viva.md).
+
+## Data/model credits and authorship
+
+- Public trial records: [ClinicalTrials.gov](https://clinicaltrials.gov/) and its [official API v2 documentation](https://clinicaltrials.gov/data-api/api).
+- Published entity annotations: Kury et al. (2020), [Chia Annotated Datasets v2](https://doi.org/10.6084/m9.figshare.11855817.v2), CC BY 4.0; original corpus downloaded separately.
+- Biomedical entity model: [d4data/biomedical-ner-all](https://huggingface.co/d4data/biomedical-ner-all).
+- Semantic embeddings: [sentence-transformers/all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2).
+- Optional generated drafts: [google/flan-t5-small](https://huggingface.co/google/flan-t5-small).
+
+Development involved AI assistance. The source code, recorded commands and experiment outputs, data lineage, and independent reruns are the evidence for technical claims. Documentation and passing software tests do not establish clinical validity. Existing third-party data/model licenses and attribution requirements remain applicable; see [data sources](docs/data_sources.md) and [model details](docs/models.md).

@@ -3,6 +3,14 @@
 **/__pycache__
 .pytest_cache
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+secrets
+credentials.json
+token.json
 *.zip
 models
 data/external
