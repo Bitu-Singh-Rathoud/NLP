@@ -18,4 +18,5 @@ docs/source_guide.txt
 *.pth
 *.bin
 *.onnx
+reports/source_archive.json
 
